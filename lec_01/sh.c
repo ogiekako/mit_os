@@ -61,7 +61,6 @@ runcmd(struct cmd *cmd)
     if(ecmd->argv[0] == 0)
       exit(0);
 
-    // exec.
     execvp(ecmd->argv[0], ecmd->argv);
     break;
 
@@ -87,8 +86,44 @@ runcmd(struct cmd *cmd)
 
   case '|':
     pcmd = (struct pipecmd*)cmd;
-    fprintf(stderr, "pipe not implemented\n");
-    // Your code here ...
+
+    if (pipe(p) < 0) {
+      perror("pipe");
+      exit(-1);
+    }
+    r = fork();
+    if (r < 0) {
+      perror("fork");
+      exit(-1);
+    }
+    if (r == 0) {
+      if (close(p[0]) < 0) {
+        perror("close");
+        exit(-1);
+      }
+      if (dup2(p[1], 1) < 0) {
+        perror("dup2");
+        exit(-1);
+      }
+      if (close(p[1]) < 0) {
+        perror("close");
+        exit(-1);
+      }
+      runcmd(pcmd->left);
+    }
+    if (close(p[1]) < 0) {
+      perror("close");
+      exit(-1);
+    }
+    if (dup2(p[0], 0) < 0) {
+      perror("dup2");
+      exit(-1);
+    }
+    if (close(p[0]) < 0) {
+      perror("close");
+      exit(-1);
+    }
+    runcmd(pcmd->right);
     break;
   }    
   exit(0);
