@@ -39,6 +39,17 @@ struct pipecmd {
 int fork1(void);  // Fork but exits on failure.
 struct cmd *parsecmd(char*);
 
+// Helper function to ease error handling.
+// Example: must(close(fd), "close");
+void
+must(int ret, char* msg)
+{
+  if (ret < 0) {
+    perror(msg);
+    exit(-1);
+  }
+}
+
 // Execute cmd.  Never returns.
 void
 runcmd(struct cmd *cmd)
@@ -68,61 +79,26 @@ runcmd(struct cmd *cmd)
   case '<':
     rcmd = (struct redircmd*)cmd;
 
-    r = open(rcmd->file, rcmd->mode, 0644);
-    if (r < 0) {
-      perror("open");
-      exit(-1);
-    }
-    if (dup2(r, rcmd->fd) < 0) {
-      perror("dup2");
-      exit(-1);
-    }
-    if (close(r) < 0) {
-      perror("close");
-      exit(-1);
-    }
+    must(r = open(rcmd->file, rcmd->mode, 0644), "open");
+    must(dup2(r, rcmd->fd), "dup2");
+    must(close(r), "close");
     runcmd(rcmd->cmd);
     break;
 
   case '|':
     pcmd = (struct pipecmd*)cmd;
 
-    if (pipe(p) < 0) {
-      perror("pipe");
-      exit(-1);
-    }
-    r = fork();
-    if (r < 0) {
-      perror("fork");
-      exit(-1);
-    }
+    must(pipe(p), "pipe");
+    must(r = fork(), "fork");
     if (r == 0) {
-      if (close(p[0]) < 0) {
-        perror("close");
-        exit(-1);
-      }
-      if (dup2(p[1], 1) < 0) {
-        perror("dup2");
-        exit(-1);
-      }
-      if (close(p[1]) < 0) {
-        perror("close");
-        exit(-1);
-      }
+      must(close(p[0]), "close");
+      must(dup2(p[1], 1), "dup2");
+      must(close(p[1]), "close");
       runcmd(pcmd->left);
     }
-    if (close(p[1]) < 0) {
-      perror("close");
-      exit(-1);
-    }
-    if (dup2(p[0], 0) < 0) {
-      perror("dup2");
-      exit(-1);
-    }
-    if (close(p[0]) < 0) {
-      perror("close");
-      exit(-1);
-    }
+    must(close(p[1]), "close");
+    must(dup2(p[0], 0), "dup2");
+    must(close(p[0]), "close");
     runcmd(pcmd->right);
     break;
   }    
