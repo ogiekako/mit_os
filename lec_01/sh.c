@@ -74,7 +74,10 @@ runcmd(struct cmd *cmd)
       perror("open");
       exit(-1);
     }
-    dup2(r, rcmd->fd);
+    if (dup2(r, rcmd->fd) < 0) {
+      perror("dup2");
+      exit(-1);
+    }
     if (close(r) < 0) {
       perror("close");
       exit(-1);
