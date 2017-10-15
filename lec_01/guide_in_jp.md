@@ -16,6 +16,12 @@ e.g. `movl %eax, %ebx`
 
 e.g. `movl $0xd00d, %ebx`
 
+ドキュメントには書いてなかったけど、`*` がつくと、
+jmp インストラクションの時に、PC relative でなく、絶対値でその番号に飛ぶことを[表す](https://sourceware.org/binutils/docs/as/i386_002dVariations.html#i386_002dVariations)。
+
+e.g.  `jmp    *%edx`
+
+
 Instruction には、b, w, l をつける。(byte, word, longword)
 つけないとまちがって推測される恐れがあるので必ずつける。
 
