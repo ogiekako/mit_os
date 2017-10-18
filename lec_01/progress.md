@@ -201,3 +201,43 @@ big endian のシステムでは、バイトの順序を逆にしないとおな
 # Challenge
 あまり興味ないのでとばしまーす。
 
+# Ex.9
+
+カーネルは自身の .data 領域を stack として使うように entry.S で設定している。
+data 領域の KSTKSIZE バイトのスペースを確保し、%esp をその最後 (bootstacktop) に設定している。
+
+# Ex. 10
+%esp (stack pointer) は、call instruction などで暗に使用されている。
+%ebp (base pointer) の操作は関数のconvention. 関数の開始で、
+- 前の関数の ebp を stack に push
+- esp を ebp にコピー
+とする。
+
+こうすれば、ebp が指すメモリは常に前の関数における ebp を指していることになり、stack trace を取れるようになる。
+
+```
+Breakpoint 1, test_backtrace (x=4) at kern/init.c:13
+13      {
+(gdb) info reg $esp
+esp            0xf010ffac       0xf010ffac
+(gdb) c
+Continuing.
+=> 0xf0100040 <test_backtrace>: push   %ebp
+
+Breakpoint 1, test_backtrace (x=3) at kern/init.c:13
+13      {
+(gdb) info reg $esp
+esp            0xf010ff8c       0xf010ff8c
+```
+esp は、0x20 だけずれている。
+
+32 bit word は 4 byte なので、0x20 は、32 bit word 8つぶんに対応する。
+16 byte allignment を守るように、esp を調整している。
+これが、本来は引数は 1 つでいいのに、esp が 0x20 もずれていた理由。
+https://qiita.com/yohhoy/items/54633faf0546f8cd0e3a
+`In other words, the value (%esp + 4) is always a multiple of 16 (32 or 64) when control is transferred to the function entry point.`
+https://developer.apple.com/library/content/documentation/DeveloperTools/Conceptual/LowLevelABI/130-IA-32_Function_Calling_Conventions/IA32.html
+
+eax(x)  # push %eax
+eip     # call
+ebp     # callee
