@@ -241,3 +241,19 @@ https://developer.apple.com/library/content/documentation/DeveloperTools/Concept
 eax(x)  # push %eax
 eip     # call
 ebp     # callee
+
+# Ex 11
+
+backtrace function を作れ。
+
+関数が呼ばれた時点で、prologue は完了しているから、
+
+prev ebp     # callee <= esp = ebp
+eip     # call (return address)
+arg 1
+arg 2
+
+となっている。
+
+monitor.c に実装し、make grade が通ることを確かめた。
+

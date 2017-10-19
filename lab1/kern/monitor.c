@@ -55,13 +55,17 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 }
 
 int
-mon_backtrace(int argc, char **argv, struct Trapframe *tf)
-{
-	// Your code here.
-	return 0;
+mon_backtrace(int argc, char **argv, struct Trapframe *tf) {
+  cprintf("Stack backtrace:\n");
+  // read_ebp is inline function
+  for (uint32_t ebp = read_ebp(); ebp != 0;) {
+    int *p = (int *)ebp;
+    cprintf("  ebp %08x  eip %08x args  %08x %08x %08x %08x %08x\n", ebp, p[1],
+            p[2], p[3], p[4], p[5], p[6]);
+    ebp = p[0];
+  }
+  return 0;
 }
-
-
 
 /***** Kernel monitor command interpreter *****/
 
