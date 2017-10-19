@@ -257,3 +257,52 @@ arg 2
 
 monitor.c に実装し、make grade が通ることを確かめた。
 
+# Ex 12.
+
+参考:
+- http://wiki.osdev.org/Linker_Scripts
+- ftp://ftp.gnu.org/old-gnu/Manuals/ld-2.9.1/html_chapter/ld_toc.html
+- https://sourceware.org/gdb/onlinedocs/stabs.html
+
+`debuginfo_eip` で、`__STAB_*` はどこから来ているのか？
+
+kernel.ld:
+```
+	/* Include debugging information in kernel memory */
+	.stab : {
+		PROVIDE(__STAB_BEGIN__ = .);
+		*(.stab);   # すべての入力ファイルの .stab section を結合したもの
+		PROVIDE(__STAB_END__ = .);
+		BYTE(0)		/* Force the linker to allocate space
+```
+
+stab 領域にデータが入っている。
+.stab, .stabstr はデバッグ情報用。
+
+`.' は、output location を指す。
+SECTION command の中で使う。SECTION は、input, output mapping を指定する
+
+kdebug.c:
+```
+Stab __STAB_BEGIN__[]
+```
+
+stab.h:
+```
+struct Stab {
+	uint32_t n_strx;	// index into string table of name
+	uint8_t n_type;         // type of symbol
+	uint8_t n_other;        // misc info (usually empty)
+	uint16_t n_desc;        // description field
+	uintptr_t n_value;	// value of symbol
+};
+```
+
+gcc --gstabs によって出力される、
+.stab の各エントリは、Stab struct と同じバイナリフォーマットを持っている。
+よって、__STAB_BEGIN__ は、すべてのファイルからくる Stab の配列の先頭を指すポインタになっている。
+
+kdebug.c, monitor.c にコードを書き、
+make grade で満点とれることを確認した。
+しかし、GNUMakefile の -O1 を省くと、backtrace がぶっ壊れる。それがなぜかは謎。
+
