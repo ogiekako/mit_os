@@ -1,0 +1,30 @@
+# Running
+step - ソースコードの 1 line を実行
+stepi - instruction の 〃
+next - 関数の中に入らない
+nexti
+finish - 関数が return するまで
+advance <location> - location まで走らせる
+
+# modify breakpoints:
+delete
+disable
+enable
+
+watch <expression> - <expression> が変化した時に break.
+watch -l <address> - <address> が指す memory の値が変化した時に break
+
+print <C expression>
+e.g. p *((struct elfhdr *) 0x10000)
+
+# Stack frame
+info frame
+backtrace
+
+
+set <C expression> - 変数の値を変更
+
+# HW 2
+Shell. hw2_shell/sh.c に実装した。
+
+Challenge exercise はまだ。challenge.sh としてテストファイルを用意した。
